@@ -69,9 +69,6 @@ class PatternManager:
 
         coords: Set[Tuple[int, int]] = set()
 
-        # Iterate the chosen pattern and record coords that correspond to
-        # non-dot characters. Pattern coordinates are mapped into the
-        # maze by applying the computed offset (ox, oy).
         for py in range(base_h):
             row = pattern[py]
             for px in range(base_w):
@@ -88,9 +85,6 @@ class PatternManager:
 
         for x, y in coords:
             if self.in_bounds(x, y):
-                # Fully wall the cell
-                # '15' == all four walls present; stamping prevents
-                # generators from carving through these cells.
                 self.grid[y][x] = 15
 
     def embed_42(self) -> None:
