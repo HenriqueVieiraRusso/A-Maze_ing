@@ -33,7 +33,6 @@ class DFSGenerator:
         stack.append(start)
 
         while stack:
-            # Peek at the top of the stack (current cell)
             x, y = stack[-1]
 
             # Collect all valid unvisited neighbours
