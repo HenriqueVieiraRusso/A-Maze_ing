@@ -1,6 +1,7 @@
 import random
 from typing import Optional
 
+from .constants import MAX_LOOP_DENSITY
 from .wall import WallUtils
 from .dfs import DFSGenerator
 from .patterns import PatternManager
@@ -26,6 +27,11 @@ class MazeGenerator:
         self.perfect = perfect
         self.entry = entry
         self.exit_ = exit_
+
+        if not (0.0 <= density <= MAX_LOOP_DENSITY):
+            raise ValueError(
+                f"density must be between 0.0 and {MAX_LOOP_DENSITY}"
+            )
 
         self.density = density
 
@@ -70,20 +76,22 @@ class MazeGenerator:
         return 0 <= x < self.width and 0 <= y < self.height
 
     def generate(self) -> list[list[int]]:
-        # Validate entry/exit
         self.validator.validate(self.entry, self.exit_, self.perfect)
 
-        # Reset grid
         self.grid = [
             [15 for _ in range(self.width)] for _ in range(self.height)
         ]
 
-        # Rebind utilities to fresh grid
         self.walls.grid = self.grid
         self.patterns.grid = self.grid
 
-        # Compute and stamp 42 pattern
         coords = self.patterns.get_42_coords()
+
+        if self.entry in coords or self.exit_ in coords:
+            raise ValueError(
+                "Entry/exit cannot be inside the 42 pattern cells"
+            )
+
         self.patterns.stamp_42(coords)
 
         blocked = coords
