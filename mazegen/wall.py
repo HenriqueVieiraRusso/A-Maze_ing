@@ -4,10 +4,9 @@ from .directions import DIRECTIONS
 
 class WallUtils:
     def __init__(self, grid: list[list[int]], in_bounds: Any) -> None:
-        # Grid is a 2D array indexed as grid[y][x]
-        self.grid: list[list[int]] = grid
-        # in_bounds is provided by the generator
-        self.in_bounds: Any = in_bounds
+
+        self.grid = grid
+        self.in_bounds = in_bounds
 
     def open_wall(self, x: int, y: int, d: str) -> None:
         dx, dy, bit_current, bit_opposite = DIRECTIONS[d]
@@ -16,10 +15,7 @@ class WallUtils:
         if not self.in_bounds(nx, ny):
             return
 
-        # Remove wall from current cell
         self.grid[y][x] &= ~bit_current
-
-        # Remove opposite wall from neighbor cell
         self.grid[ny][nx] &= ~bit_opposite
 
     def close_wall(self, x: int, y: int, d: str) -> None:
