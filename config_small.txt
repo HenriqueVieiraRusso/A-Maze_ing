@@ -1,0 +1,8 @@
+WIDTH=12
+height       =      12
+ENTRY=0,0
+EXIT=9,7
+OUTPUT_FILE=maze_small.txt
+PERFECT=True
+SEED=7
+ALGORITHM=recursive_backtracker

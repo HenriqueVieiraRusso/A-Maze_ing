@@ -1,0 +1,7 @@
+imprimir maze, mesmo que seja demasiado pequeno para ter o 42. 
+Pintar o 42
+Corrigir os loops caso o maze não seja perfeito
+Transformar o projeto em package. 
+Limpar o validation.py, porque eu acho que já está a fazer parte disso no config.py
+Limpar o constants.py e o directions.py 
+ver onde e gerado o output.txt
