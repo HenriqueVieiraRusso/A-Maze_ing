@@ -84,6 +84,8 @@ class MazeGenerator:
 
         self.walls.grid = self.grid
         self.patterns.grid = self.grid
+        self.loop_gen.grid = self.grid
+        self.dfs.grid = self.grid
 
         coords = self.patterns.get_42_coords()
 
