@@ -88,7 +88,12 @@ class LoopGenerator:
 
                 for row in range(3):
                     for col in range(2):
-                        if not self._is_open_between(xx + col, yy + row, xx + col + 1, yy + row):
+                        if not self._is_open_between(
+                            xx + col,
+                            yy + row,
+                            xx + col + 1,
+                            yy + row,
+                        ):
                             all_open = False
                             break
                     if not all_open:
@@ -97,7 +102,12 @@ class LoopGenerator:
                 if all_open:
                     for row in range(2):
                         for col in range(3):
-                            if not self._is_open_between(xx + col, yy + row, xx + col, yy + row + 1):
+                            if not self._is_open_between(
+                                xx + col,
+                                yy + row,
+                                xx + col,
+                                yy + row + 1,
+                            ):
                                 all_open = False
                                 break
                         if not all_open:

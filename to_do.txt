@@ -11,3 +11,4 @@ aceitar multiplos algoritmos - podemos implementar seguir parede da esquerda/dir
 Rendering:
 - em vez de ter o user a escrever, aceitar tambe opcao das cores serem random
 - animar path celula a celula
+- Bloquear o rato quando estamos a fazer a animação. 

@@ -1,7 +1,12 @@
 """Configuration parsing for the A-Maze-ing project."""
 
 from dataclasses import dataclass
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    ValidationError,
+    model_validator,
+)
 
 
 @dataclass

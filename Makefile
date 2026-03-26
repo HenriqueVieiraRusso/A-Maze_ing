@@ -1,30 +1,35 @@
-PYTHON = python3
-VENV   = venv
-PIP    = $(VENV)/bin/pip
-RUN    = $(VENV)/bin/python
-FLAKE8 = $(VENV)/bin/flake8
+PY  = .venv/bin/python3
+PIP = .venv/bin/pip
 
-.PHONY: install run debug clean lint lint-strict
+.PHONY: install run debug lint lint-strict pack clean
 
 install:
-	$(PYTHON) -m venv $(VENV)
+	python3 -m venv .venv
 	$(PIP) install --upgrade pip
 	$(PIP) install -e ".[dev]"
 
 run:
-	$(RUN) a_maze_ing.py config.txt
+	$(PY) a_maze_ing.py config.txt
 
 debug:
-	$(RUN) -m pdb a_maze_ing.py config.txt
-
-clean:
-	rm -rf $(VENV) __pycache__ mazegen/__pycache__ \
-		.mypy_cache dist build *.egg-info \
-		maze.txt *.pyc
+	$(PY) -m pdb a_maze_ing.py config.txt
 
 lint:
-	$(FLAKE8) --max-line-length=79 a_maze_ing.py mazegen/
+	$(PY) -m flake8 . --exclude .venv
+	$(PY) -m mypy . --warn-return-any --warn-unused-ignores \
+		--ignore-missing-imports --disallow-untyped-defs \
+		--check-untyped-defs
 
 lint-strict:
-	$(FLAKE8) --max-line-length=79 --max-complexity=10 \
-		--extend-select=W,E a_maze_ing.py mazegen/
+	$(PY) -m flake8 . --exclude .venv
+	$(PY) -m mypy . --strict
+
+pack:
+	$(PIP) install build -q
+	$(PY) -m build
+	cp dist/mazegen-*.tar.gz dist/mazegen-*-none-any.whl .
+
+clean:
+	rm -rf __pycache__ mazegen/__pycache__ \
+		.mypy_cache build dist *.egg-info \
+		*.pyc maze.txt
