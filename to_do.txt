@@ -1,14 +1,23 @@
-imprimir maze, mesmo que seja demasiado pequeno para ter o 42. - done
-Pintar o 42
-Corrigir os loops caso o maze não seja perfeito
-Transformar o projeto em package. 
-Limpar o validation.py, porque eu acho que já está a fazer parte disso no config.py
-Limpar o constants.py e o directions.py 
-ver onde e gerado o output.txt
 aceitar multiplos algoritmos - podemos implementar seguir parede da esquerda/direita, deve ser facil 
+adicionar parsing de high and width consoante o tamanho do terminal
+width / 4
+height / 3 ou 4
+
+
 
 
 Rendering:
 - em vez de ter o user a escrever, aceitar tambe opcao das cores serem random
-- animar path celula a celula
 - Bloquear o rato quando estamos a fazer a animação. 
+
+
+
+import shutil
+
+def get_terminal_size():
+    size = shutil.get_terminal_size(fallback=(80, 24))
+    return size.columns, size.lines
+
+# Example usage
+cols, rows = get_terminal_size()
+print(f"Width: {cols}, Height: {rows}")
