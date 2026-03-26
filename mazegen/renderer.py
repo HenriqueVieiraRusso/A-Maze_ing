@@ -1,7 +1,11 @@
 """Terminal rendering for the A-Maze-ing project."""
 
+import time
+
 from .constants import NORTH, EAST, SOUTH, WEST
 from .directions import DIRECTIONS
+
+_ANIM_DELAY = 0.04   # seconds between animation frames
 
 # ── ANSI color codes ──────────────────────────────────
 
@@ -165,6 +169,30 @@ def _cell_line(
 
 # ── Main rendering ────────────────────────────────────
 
+def _print_maze(
+    grid: list[list[int]],
+    h: int, w: int,
+    entry: tuple[int, int],
+    exit: tuple[int, int],
+    path_map: dict[tuple[int, int], str],
+    pattern42: frozenset[tuple[int, int]],
+    clr: str,
+) -> None:
+    """Print every line of the maze (shared by all renderers)."""
+    for y in range(h):
+        print(clr + _top_line(grid, y, w, h) + RESET)
+        print(clr + _cell_line(
+            grid, y, w, entry, exit,
+            path_map, pattern42, clr,
+        ) + RESET)
+    bot = ""
+    for x in range(w):
+        bot += _corner(grid, x, h, w, h)
+        bot += "───" if grid[h - 1][x] & SOUTH else "   "
+    bot += _corner(grid, w, h, w, h)
+    print(clr + bot + RESET)
+
+
 def render(
     grid: list[list[int]],
     entry: tuple[int, int],
@@ -174,41 +202,37 @@ def render(
     wall_color: str,
     pattern42: frozenset[tuple[int, int]] = frozenset(),
 ) -> None:
-    """Render the maze to the terminal.
-
-    Draws the maze grid with optional path overlay using
-    ANSI colors. Entry is shown as 'E' (green), exit as
-    'X' (red), path as arrows (yellow), and the 42 pattern
-    cells as magenta squares.
-
-    Args:
-        grid: A 2D list of integers encoding wall presence
-            per cell using bitflags (N=1, E=2, S=4, W=8).
-        entry: Tuple of (x, y) for the maze entry point.
-        exit: Tuple of (x, y) for the maze exit point.
-        path: A NESW string representing the solution path.
-        show_path: Whether to overlay the solution path.
-        wall_color: ANSI color name for rendering walls.
-        pattern42: Cells belonging to the 42 pattern.
-    """
-    h = len(grid)
-    w = len(grid[0])
+    """Render the maze instantly (no animation)."""
+    h, w = len(grid), len(grid[0])
     clr = COLORS.get(wall_color, "")
-
     path_map: dict[tuple[int, int], str] = {}
     if show_path and path:
         path_map = _trace_path(entry, path)
+    _print_maze(grid, h, w, entry, exit, path_map, pattern42, clr)
 
+
+def animate_generation(
+    grid: list[list[int]],
+    entry: tuple[int, int],
+    exit: tuple[int, int],
+    wall_color: str,
+    pattern42: frozenset[tuple[int, int]] = frozenset(),
+) -> None:
+    """Reveal the maze row by row with a short delay.
+
+    Prints the top wall and cell line for each row in
+    sequence, pausing between rows to create the effect
+    of the maze appearing from top to bottom.
+    """
+    h, w = len(grid), len(grid[0])
+    clr = COLORS.get(wall_color, "")
     for y in range(h):
-        top = _top_line(grid, y, w, h)
-        print(clr + top + RESET)
-        mid = _cell_line(
+        print(clr + _top_line(grid, y, w, h) + RESET)
+        print(clr + _cell_line(
             grid, y, w, entry, exit,
-            path_map, pattern42, clr,
-        )
-        print(clr + mid + RESET)
-
-    # bottom wall line
+            {}, pattern42, clr,
+        ) + RESET)
+        time.sleep(_ANIM_DELAY)
     bot = ""
     for x in range(w):
         bot += _corner(grid, x, h, w, h)
@@ -217,11 +241,50 @@ def render(
     print(clr + bot + RESET)
 
 
+def animate_path(
+    grid: list[list[int]],
+    entry: tuple[int, int],
+    exit: tuple[int, int],
+    path: str,
+    wall_color: str,
+    pattern42: frozenset[tuple[int, int]] = frozenset(),
+) -> None:
+    """Draw the solution path one step at a time.
+
+    Builds the path map incrementally. After each step,
+    moves the cursor back up with ANSI to overwrite the
+    previous frame — no screen flash.
+    """
+    h, w = len(grid), len(grid[0])
+    clr = COLORS.get(wall_color, "")
+    lines = h * 2 + 1   # lines printed per full maze render
+
+    # Pre-build the ordered list of (x, y, marker) steps
+    steps: list[tuple[int, int, str]] = []
+    x, y = entry
+    for ch in path:
+        steps.append((x, y, ch))
+        x, y = x + DIRECTIONS[ch][0], y + DIRECTIONS[ch][1]
+    steps.append((x, y, "*"))   # final cell at exit
+
+    path_map: dict[tuple[int, int], str] = {}
+    for i, (sx, sy, d) in enumerate(steps):
+        path_map[(sx, sy)] = d
+        if i > 0:
+            # Move cursor back up to overwrite the previous frame
+            print(f"\033[{lines}A", end="", flush=True)
+        _print_maze(
+            grid, h, w, entry, exit,
+            path_map, pattern42, clr,
+        )
+        time.sleep(_ANIM_DELAY)
+
+
 # ── Interactive menu ──────────────────────────────────
 
 _MENU_ITEMS = [
-    "1. Display maze",
-    "2. Solve & show path",
+    "1. Animate maze generation",
+    "2. Animate solution path",
     "3. Change wall color",
     "4. Regenerate (new seed)",
     "5. Show maze info",

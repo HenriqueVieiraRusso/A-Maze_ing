@@ -6,7 +6,9 @@ import random
 from mazegen.config import parse_config, MazeConfig
 from mazegen.generator import MazeGenerator
 from mazegen.solver import MazeSolver
-from mazegen.renderer import render, show_menu, COLORS
+from mazegen.renderer import (
+    animate_generation, animate_path, show_menu, COLORS,
+)
 
 
 def _build_maze(
@@ -130,14 +132,14 @@ def main() -> None:
         choice = show_menu()
 
         if choice == 1:
-            render(
+            animate_generation(
                 grid, config.entry, config.exit,
-                path, False, wall_color, pat42,
+                wall_color, pat42,
             )
         elif choice == 2:
-            render(
+            animate_path(
                 grid, config.entry, config.exit,
-                path, True, wall_color, pat42,
+                path, wall_color, pat42,
             )
         elif choice == 3:
             wall_color = _change_color(wall_color)
