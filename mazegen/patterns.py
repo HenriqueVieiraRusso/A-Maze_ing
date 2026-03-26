@@ -61,7 +61,7 @@ class PatternManager:
         avail_h = self.height - (2 * margin)
 
         if avail_w < base_w or avail_h < base_h:
-            raise ValueError("Maze too small for 42 pattern")
+            raise ValueError("/n🎨 Maze too small for 42 pattern 🎨")
 
         # Center the pattern
         ox = (self.width - base_w) // 2
@@ -88,6 +88,7 @@ class PatternManager:
                 self.grid[y][x] = 15
 
     def embed_42(self) -> None:
+        self.omitted_42 = False
         try:
             coords = self.get_42_coords()
         except ValueError:

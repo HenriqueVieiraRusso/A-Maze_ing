@@ -1,7 +1,7 @@
 """Configuration parsing for the A-Maze-ing project."""
 
 from dataclasses import dataclass
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
 
 @dataclass
@@ -25,7 +25,7 @@ class MazeConfig:
     exit: tuple[int, int]
     output_file: str
     perfect: bool
-    seed: int | None = None
+    seed: int = 42
     algorithm: str = 'recursive_backtracker'
 
 
@@ -42,7 +42,7 @@ class _ConfigModel(BaseModel):
     exit_point: tuple[int, int]
     output_file: str = Field(min_length=1)
     perfect: bool
-    seed: int | None = None
+    seed: int = 42
     algorithm: str = 'recursive_backtracker'
 
     @model_validator(mode='after')
@@ -64,6 +64,40 @@ class _ConfigModel(BaseModel):
                 "Entry and exit cannot be the same"
             )
         return self
+
+
+def _parse_seed(value: str) -> int:
+    """Parse a seed value, raising on invalid input.
+
+    Returns 42 if the value is 'none' (case-insensitive).
+    Raises ValueError for empty strings, non-integers,
+    or integers that are not positive (> 0).
+
+    Args:
+        value: Raw string value from the config file.
+
+    Returns:
+        A positive integer seed, or 42 for 'none'.
+
+    Raises:
+        ValueError: If the value is not a positive int
+            or the string 'none'.
+    """
+    if value.lower() == 'none':
+        return 42
+    try:
+        seed = int(value)
+    except ValueError:
+        raise ValueError(
+            f"SEED must be a positive integer or 'none',"
+            f" got '{value}'"
+        )
+    if seed <= 0:
+        raise ValueError(
+            f"SEED must be a positive integer or 'none',"
+            f" got '{value}'"
+        )
+    return seed
 
 
 def _parse_point(value: str) -> tuple[int, int]:
@@ -109,20 +143,32 @@ def parse_config(filepath: str) -> MazeConfig:
         if key not in raw:
             raise ValueError(f"Missing config key: {key}")
 
-    seed = int(raw['SEED']) if 'SEED' in raw else None
+    seed = (
+        _parse_seed(raw['SEED'].strip())
+        if 'SEED' in raw else 42
+    )
     algo = raw.get('ALGORITHM', 'recursive_backtracker')
 
-    validated = _ConfigModel(
-        width=int(raw['WIDTH']),
-        height=int(raw['HEIGHT']),
-        entry=_parse_point(raw['ENTRY']),
-        exit_point=_parse_point(raw['EXIT']),
-        output_file=raw['OUTPUT_FILE'],
-        perfect=raw['PERFECT'].lower()
-        in ('true', '1', 'yes'),
-        seed=seed,
-        algorithm=algo,
-    )
+    try:
+        validated = _ConfigModel(
+            width=int(raw['WIDTH']),
+            height=int(raw['HEIGHT']),
+            entry=_parse_point(raw['ENTRY']),
+            exit_point=_parse_point(raw['EXIT']),
+            output_file=raw['OUTPUT_FILE'],
+            perfect=raw['PERFECT'].lower()
+            in ('true', '1', 'yes'),
+            seed=seed,
+            algorithm=algo,
+        )
+    except ValidationError as e:
+        msgs = [
+            str(err['ctx']['error'])
+            if 'ctx' in err and 'error' in err['ctx']
+            else err['msg']
+            for err in e.errors()
+        ]
+        raise ValueError('; '.join(msgs)) from e
 
     return MazeConfig(
         width=validated.width,

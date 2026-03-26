@@ -25,6 +25,7 @@ RESET = "\033[0m"
 _ENTRY_CLR = "\033[92m"   # bright green
 _EXIT_CLR = "\033[91m"    # bright red
 _PATH_CLR = "\033[93m"    # bright yellow
+_PAT42_CLR = "\033[35m"   # magenta — the 42 pattern cells
 
 # ── Box-drawing helpers ───────────────────────────────
 
@@ -99,6 +100,7 @@ def _cell(
     entry: tuple[int, int],
     exit: tuple[int, int],
     path_map: dict[tuple[int, int], str],
+    pattern42: frozenset[tuple[int, int]],
     clr: str,
 ) -> str:
     """Return the 3-char content for cell (x, y)."""
@@ -109,6 +111,8 @@ def _cell(
     if (x, y) in path_map:
         arrow = _ARROWS.get(path_map[(x, y)], "·")
         return _PATH_CLR + " " + arrow + " " + clr
+    if (x, y) in pattern42:
+        return _PAT42_CLR + " ▪ " + clr
     return "   "
 
 
@@ -145,13 +149,16 @@ def _cell_line(
     entry: tuple[int, int],
     exit: tuple[int, int],
     path_map: dict[tuple[int, int], str],
+    pattern42: frozenset[tuple[int, int]],
     clr: str,
 ) -> str:
     """Build the cell-content line for row y."""
     line = ""
     for x in range(w):
         line += "│" if grid[y][x] & WEST else " "
-        line += _cell(x, y, entry, exit, path_map, clr)
+        line += _cell(
+            x, y, entry, exit, path_map, pattern42, clr,
+        )
     line += "│" if grid[y][w - 1] & EAST else " "
     return line
 
@@ -165,12 +172,14 @@ def render(
     path: str,
     show_path: bool,
     wall_color: str,
+    pattern42: frozenset[tuple[int, int]] = frozenset(),
 ) -> None:
     """Render the maze to the terminal.
 
     Draws the maze grid with optional path overlay using
     ANSI colors. Entry is shown as 'E' (green), exit as
-    'X' (red), and the path as arrows (yellow).
+    'X' (red), path as arrows (yellow), and the 42 pattern
+    cells as magenta squares.
 
     Args:
         grid: A 2D list of integers encoding wall presence
@@ -180,6 +189,7 @@ def render(
         path: A NESW string representing the solution path.
         show_path: Whether to overlay the solution path.
         wall_color: ANSI color name for rendering walls.
+        pattern42: Cells belonging to the 42 pattern.
     """
     h = len(grid)
     w = len(grid[0])
@@ -193,7 +203,8 @@ def render(
         top = _top_line(grid, y, w, h)
         print(clr + top + RESET)
         mid = _cell_line(
-            grid, y, w, entry, exit, path_map, clr,
+            grid, y, w, entry, exit,
+            path_map, pattern42, clr,
         )
         print(clr + mid + RESET)
 

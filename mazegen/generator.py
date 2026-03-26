@@ -85,16 +85,21 @@ class MazeGenerator:
         self.walls.grid = self.grid
         self.patterns.grid = self.grid
 
-        coords = self.patterns.get_42_coords()
+        self.patterns.embed_42()
 
-        if self.entry in coords or self.exit_ in coords:
+        if self.patterns.omitted_42:
+            print(
+                "\n🌟 Maze too small to include the 42 pattern. ✨"
+            )
+        elif (
+            self.entry in self.patterns.stamp42
+            or self.exit_ in self.patterns.stamp42
+        ):
             raise ValueError(
-                "Entry/exit cannot be inside the 42 pattern cells"
+                "Entry/exit cannot be inside the 42 pattern"
             )
 
-        self.patterns.stamp_42(coords)
-
-        blocked = coords
+        blocked = self.patterns.stamp42
 
         self.dfs.generate(self.entry, blocked)
 

@@ -27,6 +27,41 @@ def _build_maze(
     return gen, grid, path
 
 
+def _write_output(
+    config: MazeConfig,
+    grid: list[list[int]],
+    path: str,
+) -> None:
+    """Write the maze to the output file.
+
+    Format (IV.5):
+      - One hex digit per cell, row by row, one row per line.
+      - An empty line.
+      - Entry coordinates as 'x,y'.
+      - Exit coordinates as 'x,y'.
+      - Solution path as a NESW string.
+    All lines end with a newline.
+
+    Args:
+        config: Parsed maze configuration (holds output_file).
+        grid:   2D list of wall-encoded integers per cell.
+        path:   Solution path as a NESW string.
+    """
+    ex, ey = config.entry
+    xx, xy = config.exit
+    with open(config.output_file, 'w') as f:
+        for row in grid:
+            f.write(
+                ''.join(format(cell, 'X') for cell in row)
+            )
+            f.write('\n')
+        f.write('\n')
+        f.write(f'{ex},{ey}\n')
+        f.write(f'{xx},{xy}\n')
+        f.write(f'{path}\n')
+    print(f"Maze written to '{config.output_file}'.")
+
+
 def _change_color(wall_color: str) -> str:
     """Prompt the user for a new wall color."""
     print("Available colors:")
@@ -80,11 +115,16 @@ def main() -> None:
 
     try:
         gen, grid, path = _build_maze(config, config.seed)
+        _write_output(config, grid, path)
     except ValueError as e:
         print(f"Error: could not generate maze — {e}")
         sys.exit(1)
+    except OSError as e:
+        print(f"Error: could not write output file — {e}")
+        sys.exit(1)
 
     wall_color = "cyan"
+    pat42 = frozenset(gen.patterns.stamp42)
 
     while True:
         choice = show_menu()
@@ -92,18 +132,20 @@ def main() -> None:
         if choice == 1:
             render(
                 grid, config.entry, config.exit,
-                path, False, wall_color,
+                path, False, wall_color, pat42,
             )
         elif choice == 2:
             render(
                 grid, config.entry, config.exit,
-                path, True, wall_color,
+                path, True, wall_color, pat42,
             )
         elif choice == 3:
             wall_color = _change_color(wall_color)
         elif choice == 4:
             seed = random.randint(0, 99999)
             gen, grid, path = _build_maze(config, seed)
+            _write_output(config, grid, path)
+            pat42 = frozenset(gen.patterns.stamp42)
             print(f"New maze generated (seed={seed}).")
         elif choice == 5:
             _show_info(config, gen, path)

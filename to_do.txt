@@ -1,7 +1,13 @@
-imprimir maze, mesmo que seja demasiado pequeno para ter o 42. 
+imprimir maze, mesmo que seja demasiado pequeno para ter o 42. - done
 Pintar o 42
 Corrigir os loops caso o maze não seja perfeito
 Transformar o projeto em package. 
 Limpar o validation.py, porque eu acho que já está a fazer parte disso no config.py
 Limpar o constants.py e o directions.py 
 ver onde e gerado o output.txt
+aceitar multiplos algoritmos - podemos implementar seguir parede da esquerda/direita, deve ser facil 
+
+
+Rendering:
+- em vez de ter o user a escrever, aceitar tambe opcao das cores serem random
+- animar path celula a celula
