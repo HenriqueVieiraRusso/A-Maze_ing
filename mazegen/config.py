@@ -1,5 +1,6 @@
 """Configuration parsing for the A-Maze-ing project."""
 
+import shutil
 from dataclasses import dataclass
 from pydantic import (
     BaseModel,
@@ -7,6 +8,15 @@ from pydantic import (
     ValidationError,
     model_validator,
 )
+
+
+def get_terminal_size() -> tuple[int, int]:
+    """Return maze-appropriate (width, height) derived from terminal size.
+
+    Width is terminal columns // 4, height is terminal lines // 2.
+    """
+    cols, lines = shutil.get_terminal_size()
+    return cols // 4, lines // 2
 
 
 @dataclass
@@ -148,6 +158,20 @@ def parse_config(filepath: str) -> MazeConfig:
         if key not in raw:
             raise ValueError(f"Missing config key: {key}")
 
+    width = int(raw['WIDTH'])
+    height = int(raw['HEIGHT'])
+    term_w, term_h = get_terminal_size()
+    if width > term_w:
+        raise ValueError(
+            f"WIDTH {width} exceeds terminal limit {term_w}"
+            f" (terminal columns // 4)"
+        )
+    if height > term_h:
+        raise ValueError(
+            f"HEIGHT {height} exceeds terminal limit {term_h}"
+            f" (terminal lines // 2)"
+        )
+
     seed = (
         _parse_seed(raw['SEED'].strip())
         if 'SEED' in raw else 42
@@ -156,8 +180,8 @@ def parse_config(filepath: str) -> MazeConfig:
 
     try:
         validated = _ConfigModel(
-            width=int(raw['WIDTH']),
-            height=int(raw['HEIGHT']),
+            width=width,
+            height=height,
             entry=_parse_point(raw['ENTRY']),
             exit_point=_parse_point(raw['EXIT']),
             output_file=raw['OUTPUT_FILE'],
