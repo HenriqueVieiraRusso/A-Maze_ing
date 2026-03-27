@@ -11,3 +11,5 @@ dist/
 *.egg-info/
 .coverage
 htmlcov/
+.claude/
+maze.txt
