@@ -1,18 +1,12 @@
 aceitar multiplos algoritmos - podemos implementar seguir parede da esquerda/direita, deve ser facil 
-adicionar parsing de high and width consoante o tamanho do terminal
-width / 4
-height / 3 ou 4
 
 
-
+PARSING:
+Acrescentar parsing do ficheiro output. Tem que acabar com .txt. 
 
 Rendering:
 - Bloquear o rato quando estamos a fazer a animação. 
+- Animar geracao maze
 
-
-
-nes
-
-# Example usage
-cols, rows = get_terminal_size()
-print(f"Width: {cols}, Height: {rows}")
+questoes:
+why is max desnsity set to 0.25? (constants.py)
