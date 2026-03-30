@@ -65,16 +65,11 @@ def _write_output(
 
 
 def _change_color(wall_color: str) -> str:
-    """Prompt the user for a new wall color."""
-    print("Available colors:")
-    for name in COLORS:
-        print(f"  - {name}")
-    new = input("Enter color: ").strip()
-    if new in COLORS:
-        print(f"Color set to {new}.")
-        return new
-    print("Unknown color, keeping current.")
-    return wall_color
+    """Set wall color to a random color from available colors."""
+    available_colors = [c for c in COLORS if c != wall_color]
+    new = random.choice(available_colors)
+    print(f"Color set to {new}.")
+    return new
 
 
 def _show_info(
@@ -126,6 +121,7 @@ def main() -> None:
         sys.exit(1)
 
     wall_color = "cyan"
+    pat42_color = "magenta"
     pat42 = frozenset(gen.patterns.stamp42)
 
     while True:
@@ -134,20 +130,29 @@ def main() -> None:
         if choice == 1:
             animate_generation(
                 grid, config.entry, config.exit,
-                wall_color, pat42,
+                wall_color, pat42, pat42_color,
             )
         elif choice == 2:
             animate_path(
                 grid, config.entry, config.exit,
-                path, wall_color, pat42,
+                path, wall_color, pat42, pat42_color,
             )
         elif choice == 3:
             wall_color = _change_color(wall_color)
+            pat42_color = _change_color(pat42_color)
+            animate_generation(
+                grid, config.entry, config.exit,
+                wall_color, pat42, pat42_color,
+            )
         elif choice == 4:
             seed = random.randint(0, 99999)
             gen, grid, path = _build_maze(config, seed)
             _write_output(config, grid, path)
             pat42 = frozenset(gen.patterns.stamp42)
+            animate_generation(
+                grid, config.entry, config.exit,
+                wall_color, pat42, pat42_color,
+            )
             print(f"New maze generated (seed={seed}).")
         elif choice == 5:
             _show_info(config, gen, path)

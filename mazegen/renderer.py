@@ -5,7 +5,7 @@ import time
 from .constants import NORTH, EAST, SOUTH, WEST
 from .directions import DIRECTIONS
 
-_ANIM_DELAY = 0.0000000000001  # seconds between animation frames
+_ANIM_DELAY = 0.02  # seconds between animation frames
 
 # ── ANSI color codes ──────────────────────────────────
 
@@ -25,11 +25,26 @@ COLORS: dict[str, str] = {
     "bright_cyan": "\033[96m",
     "bright_white": "\033[97m",
 }
+BG_COLORS: dict[str, str] = {
+    "red": "\033[41m",
+    "green": "\033[42m",
+    "yellow": "\033[43m",
+    "blue": "\033[44m",
+    "magenta": "\033[45m",
+    "cyan": "\033[46m",
+    "white": "\033[47m",
+    "bright_red": "\033[101m",
+    "bright_green": "\033[102m",
+    "bright_yellow": "\033[103m",
+    "bright_blue": "\033[104m",
+    "bright_magenta": "\033[105m",
+    "bright_cyan": "\033[106m",
+    "bright_white": "\033[107m",
+}
 RESET = "\033[0m"
 _ENTRY_CLR = "\033[92m"   # bright green
 _EXIT_CLR = "\033[91m"    # bright red
 _PATH_CLR = "\033[93m"    # bright yellow
-_PAT42_CLR = "\033[35m"   # magenta — the 42 pattern cells
 
 # ── Box-drawing helpers ───────────────────────────────
 
@@ -106,6 +121,7 @@ def _cell(
     path_map: dict[tuple[int, int], str],
     pattern42: frozenset[tuple[int, int]],
     clr: str,
+    pat42_clr: str,
 ) -> str:
     """Return the 3-char content for cell (x, y)."""
     if (x, y) == entry:
@@ -116,7 +132,7 @@ def _cell(
         arrow = _ARROWS.get(path_map[(x, y)], "·")
         return _PATH_CLR + " " + arrow + " " + clr
     if (x, y) in pattern42:
-        return _PAT42_CLR + " ▪ " + clr
+        return pat42_clr + "   " + RESET + clr
     return "   "
 
 
@@ -155,13 +171,14 @@ def _cell_line(
     path_map: dict[tuple[int, int], str],
     pattern42: frozenset[tuple[int, int]],
     clr: str,
+    pat42_clr: str,
 ) -> str:
     """Build the cell-content line for row y."""
     line = ""
     for x in range(w):
         line += "│" if grid[y][x] & WEST else " "
         line += _cell(
-            x, y, entry, exit, path_map, pattern42, clr,
+            x, y, entry, exit, path_map, pattern42, clr, pat42_clr,
         )
     line += "│" if grid[y][w - 1] & EAST else " "
     return line
@@ -177,13 +194,14 @@ def _print_maze(
     path_map: dict[tuple[int, int], str],
     pattern42: frozenset[tuple[int, int]],
     clr: str,
+    pat42_clr: str,
 ) -> None:
     """Print every line of the maze (shared by all renderers)."""
     for y in range(h):
         print(clr + _top_line(grid, y, w, h) + RESET)
         print(clr + _cell_line(
             grid, y, w, entry, exit,
-            path_map, pattern42, clr,
+            path_map, pattern42, clr, pat42_clr,
         ) + RESET)
     bot = ""
     for x in range(w):
@@ -201,14 +219,16 @@ def render(
     show_path: bool,
     wall_color: str,
     pattern42: frozenset[tuple[int, int]] = frozenset(),
+    pat42_color: str = "magenta",
 ) -> None:
     """Render the maze instantly (no animation)."""
     h, w = len(grid), len(grid[0])
     clr = COLORS.get(wall_color, "")
+    pat42_clr = BG_COLORS.get(pat42_color, "")
     path_map: dict[tuple[int, int], str] = {}
     if show_path and path:
         path_map = _trace_path(entry, path)
-    _print_maze(grid, h, w, entry, exit, path_map, pattern42, clr)
+    _print_maze(grid, h, w, entry, exit, path_map, pattern42, clr, pat42_clr)
 
 
 def animate_generation(
@@ -217,6 +237,7 @@ def animate_generation(
     exit: tuple[int, int],
     wall_color: str,
     pattern42: frozenset[tuple[int, int]] = frozenset(),
+    pat42_color: str = "magenta",
 ) -> None:
     """Reveal the maze row by row with a short delay.
 
@@ -226,11 +247,12 @@ def animate_generation(
     """
     h, w = len(grid), len(grid[0])
     clr = COLORS.get(wall_color, "")
+    pat42_clr = BG_COLORS.get(pat42_color, "")
     for y in range(h):
         print(clr + _top_line(grid, y, w, h) + RESET)
         print(clr + _cell_line(
             grid, y, w, entry, exit,
-            {}, pattern42, clr,
+            {}, pattern42, clr, pat42_clr,
         ) + RESET)
         time.sleep(_ANIM_DELAY)
     bot = ""
@@ -248,6 +270,7 @@ def animate_path(
     path: str,
     wall_color: str,
     pattern42: frozenset[tuple[int, int]] = frozenset(),
+    pat42_color: str = "magenta",
 ) -> None:
     """Draw the solution path one step at a time.
 
@@ -257,6 +280,7 @@ def animate_path(
     """
     h, w = len(grid), len(grid[0])
     clr = COLORS.get(wall_color, "")
+    pat42_clr = BG_COLORS.get(pat42_color, "")
     lines = h * 2 + 1   # lines printed per full maze render
 
     # Pre-build the ordered list of (x, y, marker) steps
@@ -275,7 +299,7 @@ def animate_path(
             print(f"\033[{lines}A", end="", flush=True)
         _print_maze(
             grid, h, w, entry, exit,
-            path_map, pattern42, clr,
+            path_map, pattern42, clr, pat42_clr,
         )
         time.sleep(_ANIM_DELAY)
 
