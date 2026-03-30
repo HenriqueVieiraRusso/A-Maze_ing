@@ -25,7 +25,10 @@ class LoopGenerator:
         if density <= 0.0:
             return
 
-        attempts = int(len(self.grid) * len(self.grid[0]) * density)
+        h = len(self.grid)
+        w = len(self.grid[0])
+        min_attempts = w + h
+        attempts = max(min_attempts, int(w * h * density))
         if attempts < 1:
             return
 

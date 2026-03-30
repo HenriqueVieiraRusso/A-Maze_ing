@@ -18,7 +18,7 @@ class MazeGenerator:
         perfect: bool,
         entry: tuple[int, int],
         exit_: tuple[int, int],
-        density: float = 0.06,
+        density: float = 0.1,
     ) -> None:
 
         self.width = width
