@@ -5,7 +5,7 @@ import time
 from .constants import NORTH, EAST, SOUTH, WEST
 from .directions import DIRECTIONS
 
-_ANIM_DELAY = 0.008  # seconds between animation frames
+_ANIM_DELAY = 0.02  # seconds between animation frames
 
 # ── ANSI color codes ──────────────────────────────────
 
