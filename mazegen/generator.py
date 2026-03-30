@@ -1,9 +1,9 @@
 import random
-from typing import Optional
+from typing import Generator, Optional
 
 from .constants import MAX_LOOP_DENSITY
 from .wall import WallUtils
-from .dfs import DFSGenerator
+from .dfs import DFSGenerator, DFSStep
 from .patterns import PatternManager
 from .loops import LoopGenerator
 from .validation import MazeValidator
@@ -103,10 +103,35 @@ class MazeGenerator:
 
         blocked = self.patterns.stamp42
 
-        self.dfs.generate(self.entry, blocked)
+        # Exhaust the DFS generator silently
+        for _ in self.dfs.generate(self.entry, blocked):
+            pass
 
         # Add loops if not perfect
         if not self.perfect:
             self.loop_gen.add_loops(blocked, self.density)
 
         return self.grid
+
+    def generate_steps(
+        self,
+    ) -> Generator[DFSStep, None, None]:
+        """Reset the grid eagerly and return a DFS step generator.
+
+        Unlike generate(), this is NOT a generator function — the
+        grid is reset immediately on call so the caller can pass
+        self.grid to the renderer before any steps are consumed.
+        Loops are NOT added — the animation shows pure DFS only.
+        """
+        self.grid = [
+            [15 for _ in range(self.width)] for _ in range(self.height)
+        ]
+        self.walls.grid = self.grid
+        self.patterns.grid = self.grid
+        self.loop_gen.grid = self.grid
+        self.dfs.grid = self.grid
+
+        self.patterns.embed_42()
+
+        blocked = self.patterns.stamp42
+        return self.dfs.generate(self.entry, blocked)

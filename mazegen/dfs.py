@@ -1,9 +1,10 @@
-from typing import List, Set, Tuple, Any
+from typing import Generator, List, Set, Tuple, Any
 from .directions import DIRECTIONS
 
 
 Coord = Tuple[int, int]
 Neighbor = Tuple[int, int, str]
+DFSStep = Tuple[int, int, str]   # (x, y, action)
 
 
 class DFSGenerator:
@@ -24,13 +25,20 @@ class DFSGenerator:
         self,
         start: Coord,
         blocked: Set[Coord],
-    ) -> None:
+    ) -> Generator[DFSStep, None, None]:
+        """Run DFS maze carving, yielding each step.
 
+        Yields:
+            (x, y, action) where action is:
+              'visit'     — moved into a new cell and carved a wall
+              'backtrack' — dead end, popped from the stack
+        """
         visited: Set[Coord] = set()
         stack: List[Coord] = []
 
         visited.add(start)
         stack.append(start)
+        yield (start[0], start[1], 'visit')
 
         while stack:
             x, y = stack[-1]
@@ -56,6 +64,7 @@ class DFSGenerator:
             # If there are no available neighbours, backtrack by popping
             if not neighbors:
                 stack.pop()
+                yield (x, y, 'backtrack')
                 continue
 
             # Choose a random neighbour and carve a passage to it
@@ -67,3 +76,4 @@ class DFSGenerator:
             # Mark neighbour visited and push it onto the stack
             visited.add((nx, ny))
             stack.append((nx, ny))
+            yield (nx, ny, 'visit')

@@ -1,9 +1,11 @@
 """Terminal rendering for the A-Maze-ing project."""
 
 import time
+from typing import Generator
 
 from .constants import NORTH, EAST, SOUTH, WEST
 from .directions import DIRECTIONS
+from .dfs import DFSStep
 
 _ANIM_DELAY = 0.02  # seconds between animation frames
 
@@ -42,9 +44,11 @@ BG_COLORS: dict[str, str] = {
     "bright_white": "\033[107m",
 }
 RESET = "\033[0m"
-_ENTRY_CLR = "\033[92m"   # bright green
-_EXIT_CLR = "\033[91m"    # bright red
-_PATH_CLR = "\033[93m"    # bright yellow
+_ENTRY_CLR = "\033[92m"      # bright green
+_EXIT_CLR = "\033[91m"       # bright red
+_PATH_CLR = "\033[93m"       # bright yellow
+_VISIT_CLR = "\033[44m"      # blue background — active cell
+_BACKTRACK_CLR = "\033[100m" # dark grey background — backtracked cell
 
 # ── Box-drawing helpers ───────────────────────────────
 
@@ -122,6 +126,9 @@ def _cell(
     pattern42: frozenset[tuple[int, int]],
     clr: str,
     pat42_clr: str,
+    dfs_visited: frozenset[tuple[int, int]] | None = None,
+    dfs_backtracked: frozenset[tuple[int, int]] | None = None,
+    dfs_current: tuple[int, int] | None = None,
 ) -> str:
     """Return the 3-char content for cell (x, y)."""
     if (x, y) == entry:
@@ -133,6 +140,12 @@ def _cell(
         return _PATH_CLR + " " + arrow + " " + clr
     if (x, y) in pattern42:
         return pat42_clr + "   " + RESET + clr
+    if dfs_current is not None and (x, y) == dfs_current:
+        return _VISIT_CLR + " · " + RESET + clr
+    if dfs_backtracked and (x, y) in dfs_backtracked:
+        return _BACKTRACK_CLR + "   " + RESET + clr
+    if dfs_visited and (x, y) in dfs_visited:
+        return _VISIT_CLR + "   " + RESET + clr
     return "   "
 
 
@@ -172,6 +185,9 @@ def _cell_line(
     pattern42: frozenset[tuple[int, int]],
     clr: str,
     pat42_clr: str,
+    dfs_visited: frozenset[tuple[int, int]] | None = None,
+    dfs_backtracked: frozenset[tuple[int, int]] | None = None,
+    dfs_current: tuple[int, int] | None = None,
 ) -> str:
     """Build the cell-content line for row y."""
     line = ""
@@ -179,6 +195,7 @@ def _cell_line(
         line += "│" if grid[y][x] & WEST else " "
         line += _cell(
             x, y, entry, exit, path_map, pattern42, clr, pat42_clr,
+            dfs_visited, dfs_backtracked, dfs_current,
         )
     line += "│" if grid[y][w - 1] & EAST else " "
     return line
@@ -195,6 +212,9 @@ def _print_maze(
     pattern42: frozenset[tuple[int, int]],
     clr: str,
     pat42_clr: str,
+    dfs_visited: frozenset[tuple[int, int]] | None = None,
+    dfs_backtracked: frozenset[tuple[int, int]] | None = None,
+    dfs_current: tuple[int, int] | None = None,
 ) -> None:
     """Print every line of the maze (shared by all renderers)."""
     for y in range(h):
@@ -202,6 +222,7 @@ def _print_maze(
         print(clr + _cell_line(
             grid, y, w, entry, exit,
             path_map, pattern42, clr, pat42_clr,
+            dfs_visited, dfs_backtracked, dfs_current,
         ) + RESET)
     bot = ""
     for x in range(w):
@@ -304,15 +325,64 @@ def animate_path(
         time.sleep(_ANIM_DELAY)
 
 
+def animate_dfs(
+    grid: list[list[int]],
+    entry: tuple[int, int],
+    exit: tuple[int, int],
+    steps: Generator[DFSStep, None, None],
+    wall_color: str,
+    pattern42: frozenset[tuple[int, int]] = frozenset(),
+    pat42_color: str = "magenta",
+) -> None:
+    """Animate DFS generation step by step.
+
+    Colours visited cells with a blue background and
+    backtracked cells with a dark grey background.
+    The current cell is marked with a dot.
+    Redraws the full maze on every step using cursor
+    repositioning so the display stays in place.
+    """
+    h, w = len(grid), len(grid[0])
+    clr = COLORS.get(wall_color, "")
+    pat42_clr = BG_COLORS.get(pat42_color, "")
+    lines = h * 2 + 1
+
+    visited: set[tuple[int, int]] = set()
+    backtracked: set[tuple[int, int]] = set()
+    first = True
+
+    for i, (x, y, action) in enumerate(steps):
+        if action == 'visit':
+            visited.add((x, y))
+        elif action == 'backtrack':
+            backtracked.add((x, y))
+
+        current = (x, y) if action == 'visit' else None
+
+        if not first:
+            print(f"\033[{lines}A", end="", flush=True)
+        first = False
+
+        _print_maze(
+            grid, h, w, entry, exit,
+            {}, pattern42, clr, pat42_clr,
+            frozenset(visited),
+            frozenset(backtracked),
+            current,
+        )
+        time.sleep(_ANIM_DELAY)
+
+
 # ── Interactive menu ──────────────────────────────────
 
 _MENU_ITEMS = [
-    "1. Animate maze generation",
-    "2. Animate solution path",
-    "3. Change wall color",
-    "4. Regenerate (new seed)",
-    "5. Show maze info",
-    "6. Exit",
+    "1. Animate DFS generation",
+    "2. Animate maze reveal",
+    "3. Animate solution path",
+    "4. Change wall color",
+    "5. Regenerate (new seed)",
+    "6. Show maze info",
+    "7. Exit",
 ]
 
 

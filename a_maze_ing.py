@@ -7,7 +7,7 @@ from mazegen.config import parse_config, MazeConfig
 from mazegen.generator import MazeGenerator
 from mazegen.solver import MazeSolver
 from mazegen.renderer import (
-    animate_generation, animate_path, show_menu, COLORS,
+    animate_dfs, animate_generation, animate_path, show_menu, COLORS,
 )
 
 
@@ -128,23 +128,31 @@ def main() -> None:
         choice = show_menu()
 
         if choice == 1:
+            steps = gen.generate_steps()   # grid reset happens here
+            animate_dfs(
+                gen.grid, config.entry, config.exit,
+                steps, wall_color, pat42, pat42_color,
+            )
+            grid = gen.grid                # sync local reference
+            pat42 = frozenset(gen.patterns.stamp42)
+        elif choice == 2:
             animate_generation(
                 grid, config.entry, config.exit,
                 wall_color, pat42, pat42_color,
             )
-        elif choice == 2:
+        elif choice == 3:
             animate_path(
                 grid, config.entry, config.exit,
                 path, wall_color, pat42, pat42_color,
             )
-        elif choice == 3:
+        elif choice == 4:
             wall_color = _change_color(wall_color)
             pat42_color = _change_color(pat42_color)
             animate_generation(
                 grid, config.entry, config.exit,
                 wall_color, pat42, pat42_color,
             )
-        elif choice == 4:
+        elif choice == 5:
             seed = random.randint(0, 99999)
             gen, grid, path = _build_maze(config, seed)
             _write_output(config, grid, path)
@@ -154,9 +162,9 @@ def main() -> None:
                 wall_color, pat42, pat42_color,
             )
             print(f"New maze generated (seed={seed}).")
-        elif choice == 5:
-            _show_info(config, gen, path)
         elif choice == 6:
+            _show_info(config, gen, path)
+        elif choice == 7:
             print("Goodbye!")
             break
 
